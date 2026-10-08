@@ -337,9 +337,11 @@ export default function CollectionRecords() {
         );
     } else {
         return (
-            <Center h="100vh" w="100vw">
-                <IconTableShortcut style={{ width: rem(40), height: rem(40) }} />
-                Select collection to see Records
+            <Center style={{ flex: 1 }}>
+                <Flex direction="column" align="center" gap="xs" c="dimmed">
+                    <IconTableShortcut style={{ width: rem(36), height: rem(36) }} stroke={1.5} />
+                    <Text size="sm">Select a collection to see its records</Text>
+                </Flex>
             </Center>
         );
     }

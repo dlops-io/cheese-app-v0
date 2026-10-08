@@ -15,7 +15,7 @@ export default function MainLayout({ children }) {
             <div id="__next">
                 <div className="antialiased">
                     <Header></Header>
-                    <main className={classNames('flex flex-col tablet:pl-16 laptop:pl-11',)}>
+                    <main className={classNames('flex flex-col',)}>
                         {children}
                     </main>
                 </div>

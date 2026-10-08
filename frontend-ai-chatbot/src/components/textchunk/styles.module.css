@@ -12,11 +12,17 @@
 
 .chunkedText {
     white-space: pre-wrap;
-    font-family: monospace;
-    width: 50%;
-    margin: 0 auto;
-    text-align: center;
-    padding-top: 30px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    text-align: left;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 24px;
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04);
 }
 
 .uploadButtonAre {
@@ -29,14 +35,15 @@
 }
 
 .textAreaField {
-    width: 500px;
+    width: 100%;
 }
 
 .sliderContainer {
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
+    margin-top: 12px;
 }
 
 .divider {

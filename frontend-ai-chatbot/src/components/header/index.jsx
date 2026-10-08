@@ -1,55 +1,53 @@
 'use client'
 
-import React, { useContext, useCallback } from 'react';
+import React from 'react';
 import Link from 'next/link'
+import { usePathname } from 'next/navigation';
 import classNames from 'classnames';
-import HeaderLogo from './HeaderLogo';
 
 // Import the styles
 import styles from "./styles.module.css";
 
-export default function Header() {
+const NAV_ITEMS = [
+    { href: '/chunkviz', label: 'Text Chunking' },
+    { href: '/chromaui', label: 'Vector DB' },
+    { href: '/chat', label: 'Chat' },
+    { href: '/agent', label: 'Cheese Expert Agent' },
+    { href: '/finetunechat', label: 'Pavlos Cheese Model' },
+];
 
-    console.log("Header....")
+export default function Header() {
+    const pathname = usePathname();
 
     return (
         <header
             className={classNames(
-                'sticky top-0 z-header flex h-14 flex-row content-center items-center justify-center gap-3 border-b border-border-subtlest-tertiary px-4 py-3 tablet:px-8 laptop:left-0 laptop:h-16 laptop:w-full laptop:px-4 laptopL:grid laptopL:auto-cols-fr laptopL:grid-flow-col',
+                'sticky top-0 z-header flex h-14 items-center gap-4 px-4 shadow-md tablet:px-6 laptop:h-16',
                 styles.header
             )}
         >
-            <div
-                className={classNames(
-                    'flex flex-1  laptop:flex-none laptop:justify-start'
-                )}
-            >
-                <h1 className="flex items-center text-xl font-semibold text-white tracking-tight p-4">
-                    <img src='logo.png' alt="Logo" className="h-8 md:h-10 lg:h-12 mr-3" />
-                    AC215: LLM + RAG
-                </h1>
-
-            </div>
-            <nav className="flex items-center space-x-4">
-                <Link href="/chunkviz" className="font-bold text-white hover:text-gray-300 transition-colors">
-                    Text Chunking
-                </Link>
-                <div className={styles.menuSeparator}></div>
-                <Link href="/chromaui" className="font-bold text-white hover:text-gray-300 transition-colors">
-                    Vector DB
-                </Link>
-                <div className={styles.menuSeparator}></div>
-                <Link href="/chat" className="font-bold text-white hover:text-gray-300 transition-colors">
-                    Chat
-                </Link>
-                <div className={styles.menuSeparator}></div>
-                <Link href="/agent" className="font-bold text-white hover:text-gray-300 transition-colors">
-                    Cheese Expert Agent
-                </Link>
-                <div className={styles.menuSeparator}></div>
-                <Link href="/finetunechat" className="font-bold text-white hover:text-gray-300 transition-colors">
-                    Pavlos Cheese Model
-                </Link>
+            <Link href="/" className="flex shrink-0 items-center gap-3 text-white">
+                <img src='/logo.png' alt="Logo" className="h-8 w-8 rounded-md object-cover" />
+                <span className="text-lg font-semibold tracking-tight">AC215: LLM + RAG</span>
+            </Link>
+            <nav className="ml-auto flex items-center gap-1 overflow-x-auto">
+                {NAV_ITEMS.map(({ href, label }) => {
+                    const isActive = pathname === href || pathname?.startsWith(href + '/');
+                    return (
+                        <Link
+                            key={href}
+                            href={href}
+                            className={classNames(
+                                'whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                                isActive
+                                    ? 'bg-white text-gray-900 shadow-sm'
+                                    : 'text-white hover:bg-white/[0.12]'
+                            )}
+                        >
+                            {label}
+                        </Link>
+                    );
+                })}
             </nav>
         </header>
     );

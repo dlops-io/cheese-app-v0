@@ -7,9 +7,8 @@ import styles from "./styles.module.css";
 
 export default function ChatPage() {
     return (
-        <main className="flex flex-col min-h-screen">
-            <div><p className='py-2 font-bold'>Fine-tuned LLM + RAG Chat</p></div>
-            <ChatComponent finetuned={true} />
+        <main className="flex flex-col">
+            <ChatComponent finetuned={true} title="Pavlos Cheese Model" />
         </main>
     )
 }

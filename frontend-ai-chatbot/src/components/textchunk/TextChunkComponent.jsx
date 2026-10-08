@@ -365,7 +365,9 @@ function TextChunkComponent({
                         </Grid>
                         <Grid item sm={8}>
                             <div className={styles.chunkedText}>
-                                <div dangerouslySetInnerHTML={{ __html: highlightedText }} />
+                                {highlightedText
+                                    ? <div dangerouslySetInnerHTML={{ __html: highlightedText }} />
+                                    : <div style={{ color: '#9ca3af', fontFamily: 'inherit' }}>Select a book or paste some text to see how it gets chunked.</div>}
                             </div>
                         </Grid>
                     </Grid>

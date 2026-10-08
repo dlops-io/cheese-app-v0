@@ -40,27 +40,26 @@ function Navbar() {
         <nav className={classes.navbar}>
             <div className={classes.navbarMain}>
                 <Group className={classes.header} justify="space-between">
-                    &nbsp;
-                    <Code fw={700}>&nbsp;</Code>
+                    <Text fw={600} size="sm">Collections</Text>
+                    <Group gap={4}>
+                        <Tooltip label="Create Collection">
+                            <ActionIcon variant="subtle" color="gray" onClick={createCollectionOpen}>
+                                <IconPlus size={18} />
+                            </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label="Refresh">
+                            <ActionIcon variant="subtle" color="gray" onClick={() => { refetch() }}>
+                                <IconRefresh size={18} />
+                            </ActionIcon>
+                        </Tooltip>
+                    </Group>
                 </Group>
-                <Group gap={4}>
-                    <Tooltip label="Create Collection">
-                        <ActionIcon onClick={createCollectionOpen}>
-                            <IconPlus />
-                        </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Refresh">
-                        <ActionIcon onClick={() => { refetch() }}>
-                            <IconRefresh />
-                        </ActionIcon>
-                    </Tooltip>
-                </Group>
-                <br />
                 {data && Array.isArray(data) && data.map((collection) => (
                     <NavLink
                         key={collection.id}
                         active={collection.id === collectionId}
                         label={collection.name}
+                        style={{ borderRadius: 8 }}
                         component={Link}
                         href={`?collection-id=${collection.id}`}
                         rightSection={<Tooltip label="Delete">

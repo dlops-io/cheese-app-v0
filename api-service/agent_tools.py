@@ -1,4 +1,6 @@
 import json
+import random
+import time
 from google.genai import types
 
 # Specify a function declaration and parameters for an API request
@@ -74,4 +76,61 @@ def execute_function_calls(function_calls,collection, embed_func):
 			)
 
     
+    return parts
+
+# --- Fun Facts data ---
+PAVLOS_FUN_FACTS = [
+    "Mozzarella is the most consumed cheese in the U.S., largely due to pizza.",
+    "Gruyère and Emmental are classics for fondue thanks to their smooth melt.",
+    "Aging boosts sharpness; 12-month cheddar has nuttier, deeper flavors.",
+    "High-moisture cheeses (young gouda, fontina, jack) melt especially evenly.",
+    "Rind-on bries are edible; the rind adds mushroomy, earthy notes.",
+    "Salt helps control moisture and rind formation during cheesemaking.",
+    "Browned spots on grilled cheese = Maillard reaction (not caramelization).",
+    "American slices are engineered to melt at lower temperatures.",
+    "Fresh cheeses (ricotta, chèvre) soften but don’t stretch like mozzarella.",
+    "Taleggio’s washed rind brings savory depth and melts well.",
+]
+
+def pavlos_fun_fact():
+  return {
+      "fact": random.choice(PAVLOS_FUN_FACTS),
+      "generated_at": int(time.time())
+  }
+
+# ✅ Define a Tool
+def pavlos_fun_fact_tool() -> dict:
+  """Return one random fun fact from Pavlos about cheese. Call multiple times if you want several facts."""
+  return pavlos_fun_fact()
+
+# No parameters: Vertex rejects an object schema with empty properties, so omit it
+pavlos_fun_fact_func = types.FunctionDeclaration(
+    name="pavlos_fun_fact_tool",
+    description="Return one random fun fact from Pavlos about cheese. Call multiple times if you want several facts.",
+)
+
+# Tools the API server can execute itself (the book retrieval tools run in the frontend against ChromaDB)
+fun_fact_tool = types.Tool(function_declarations=[pavlos_fun_fact_func])
+
+SERVER_TOOLS = {
+    "pavlos_fun_fact_tool": lambda args: pavlos_fun_fact_tool(),
+}
+
+
+def execute_server_tool_calls(function_calls):
+    parts = []
+    for function_call in function_calls:
+        print("Function:", function_call.name, "args:", function_call.args)
+        tool = SERVER_TOOLS.get(function_call.name)
+        if tool:
+            response = tool(dict(function_call.args or {}))
+        else:
+            response = {"error": f"{function_call.name} is not available at this step. Answer using the chunks already provided."}
+        print("Response:", response)
+        parts.append(
+            types.Part.from_function_response(
+                name=function_call.name,
+                response=response,
+            )
+        )
     return parts

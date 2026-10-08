@@ -13,6 +13,7 @@ import boxShadow from './src/styles/boxShadow';
 import typography from './src/styles/typography';
 import buttons from './src/styles/buttons';
 import caret from './src/styles/caret';
+import tailwindColors from 'tailwindcss/colors';
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -34,6 +35,11 @@ module.exports = {
       status,
       text,
       shadow,
+      // Tailwind defaults used by the chat and header components
+      gray: tailwindColors.gray,
+      blue: tailwindColors.blue,
+      red: tailwindColors.red,
+      amber: tailwindColors.amber,
       black: '#000000',
       white: '#ffffff',
       transparent: 'transparent',
@@ -116,6 +122,25 @@ module.exports = {
       50: '3.125rem',
     },
     extend: {
+      // Tailwind's default radius/shadow scales (the theme above replaces them)
+      // Note: rounded-full is 100% here (circles); use rounded-pill for pill shapes
+      borderRadius: {
+        sm: '0.125rem',
+        DEFAULT: '0.25rem',
+        md: '0.375rem',
+        lg: '0.5rem',
+        xl: '0.75rem',
+        '2xl': '1rem',
+        '3xl': '1.5rem',
+        pill: '9999px',
+      },
+      boxShadow: {
+        xs: '0 1px 2px 0 rgb(0 0 0 / 0.04)',
+        sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+        DEFAULT: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+        md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+        lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+      },
       maxHeight: {
         'img-desktop': '400px',
         'img-mobile': '280px',
