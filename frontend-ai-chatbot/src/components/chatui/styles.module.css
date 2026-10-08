@@ -1,0 +1,18 @@
+.root {
+    flex-grow: 1
+}
+
+.grow {
+    flex-grow: 1
+}
+
+
+.main {}
+
+
+.container {}
+
+
+.richText {
+    margin: 10px;
+}

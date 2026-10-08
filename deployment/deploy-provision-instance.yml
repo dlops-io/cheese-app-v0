@@ -1,0 +1,109 @@
+- name: Configure app server instance
+  hosts: appserver
+  connection: ssh
+  become: true
+
+  tasks:
+    # Format and mount persistent volume
+    - name: "Format persistent disk if it does not contain a filesystem"
+      shell: "blkid -o value -s TYPE /dev/disk/by-id/google-persistent-disk-1 || mkfs.ext4 /dev/disk/by-id/google-persistent-disk-1"
+
+    - name: "Create mount directory"
+      file:
+        dest: "/mnt/disk-1"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: "Mount persistent disk"
+      mount: 
+        path: "/mnt/disk-1"
+        src: "/dev/disk/by-id/google-persistent-disk-1"
+        fstype: ext4
+        opts: discard,defaults
+        state: mounted
+
+    - name: "Disable unattended upgrade timers"
+      raw: "systemctl disable --now {{item}}"
+      with_items:
+        - "apt-daily.timer"
+        - "apt-daily-upgrade.timer"
+    
+    - name: "Reload systemctl daemon"
+      raw: "systemctl daemon-reload"
+    
+    - name: "Wait for unattended upgrade to finish if running"
+      raw: "systemd-run --property=\"After=apt-daily.service apt-daily-upgrade.service\" --wait /bin/true"
+    - name: Update apt catalog
+      apt:
+        update_cache: "yes"
+        upgrade: "yes"
+        force_apt_get: "yes"
+
+    - name: Install dependencies
+      apt:
+        name:
+          # For docker
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg-agent
+
+          # For the pip ansible module
+          - python3-setuptools
+          - python3-pip
+        force_apt_get: "yes"
+        state: present
+
+    - name: Create apt keyrings directory
+      file:
+        path: "/etc/apt/keyrings"
+        state: directory
+        mode: 0755
+
+    # apt-key was removed in Debian 13; use a signed-by keyring instead.
+    # get_url is broken by the container's py3.8/urllib3 mismatch, so shell out to curl.
+    - name: Add Docker GPG apt key
+      shell: |
+        curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg \
+          -o /etc/apt/keyrings/docker.asc
+        chmod 0644 /etc/apt/keyrings/docker.asc
+      args:
+        creates: "/etc/apt/keyrings/docker.asc"
+
+    - name: Add Docker apt repository
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        filename: "docker"
+        state: present
+
+    - name: Install Docker
+      apt:
+        name: "docker-ce"
+        force_apt_get: "yes"
+        update_cache: "yes"
+        state: present
+    
+    # Debian 13 marks the system Python externally managed (PEP 668), so use apt.
+    - name: Install Python Docker SDK
+      apt:
+        name:
+          - python3-requests
+          - python3-docker
+        force_apt_get: "yes"
+        state: present
+            
+    - name: Create Docker group
+      group:
+        name: "docker"
+        state: present
+
+    - name: Authenticate Docker with service account
+      command: gcloud auth configure-docker --quiet
+
+    - name: Start docker service
+      service:
+        name: docker
+        state: started
+
