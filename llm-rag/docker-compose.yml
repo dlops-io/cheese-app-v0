@@ -1,0 +1,26 @@
+networks:
+    default:
+        name: llm-rag-network
+
+services:
+    llm-rag-cli:
+        image: llm-rag-cli
+        build: .
+        container_name: llm-rag-cli
+        volumes:
+            - ../secrets:/secrets
+            - ../llm-rag:/app
+        environment:
+            GOOGLE_APPLICATION_CREDENTIALS: $GOOGLE_APPLICATION_CREDENTIALS
+            GCP_PROJECT: $GCP_PROJECT
+        depends_on:
+            - chromadb
+    chromadb:
+        image: chromadb/chroma:latest
+        container_name: llm-rag-chromadb
+        ports:
+            - 8000:8000
+        volumes:
+            - ./docker-volumes/chromadb:/data
+        environment:
+            CHROMA_CORS_ALLOW_ORIGINS: '["https://ac215-llm-rag.dlops.io","http://localhost:3200"]'
