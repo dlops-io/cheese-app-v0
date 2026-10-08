@@ -1,0 +1,7 @@
+# misc
+.DS_Store
+__pycache__
+
+# llm-rag
+/llm-rag/docker-volumes
+/llm-rag/outputs

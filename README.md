@@ -1,13 +1,21 @@
 # Cheese App v0: RAG Web App
 
-In this tutorial we will run a web app on top of the RAG system built in [llm-rag](https://github.com/dlops-io/llm-rag). The app has two containers: a FastAPI **api-service** that calls Gemini on Vertex AI, and a Next.js **frontend** that walks through each RAG step in the browser. The frontend reads from the ChromaDB you loaded in llm-rag, running on your laptop.
+In this tutorial we will run a Retrieval-Augmented Generation (RAG) web app. The `llm-rag` CLI loads the cheese books into ChromaDB. A FastAPI **api-service** calls Gemini on Vertex AI, and a Next.js **frontend** walks through each RAG step in the browser.
+
+**Step 1: Chunk -> Embed -> Load**
+
+![RAG pipeline — Step 1: chunk documents, embed the chunks, and load them into the vector database](llm-rag/images/llm-rag-flow-1.png)
+
+**Step 2: Query -> Embed -> Retrieve -> LLM -> Generate Answer**
+
+![RAG pipeline — Step 2: embed the query, retrieve the most relevant chunks, and generate a grounded answer](llm-rag/images/llm-rag-flow-2.png)
 
 ## What you'll build
 
 The goal: **answer questions about the cheese books through a web UI, using an LLM grounded in your own vector database**.
 
 1. **Text Chunking**: see how different splitters break the books into chunks.
-2. **Vector DB**: browse the ChromaDB collections and their embedded chunks.
+2. **Vector DB UI**: browse the ChromaDB collections and their chunks.
 3. **Chat**: ask questions answered by the LLM using chunks retrieved from the vector DB (RAG).
 4. **Cheese Expert Agent**: the LLM picks its own retrieval tool and adds a fun fact from Pavlos.
 5. **Pavlos Cheese Model**: the same RAG flow, answered by a fine-tuned model.
@@ -17,10 +25,12 @@ The goal: **answer questions about the cheese books through a web UI, using an L
 ## Contents
 
 - [Prerequisites](#prerequisites)
+- [Build the Vector DB](#build-the-vector-db)
+- [Optional: LLM RAG Tutorial](#optional-llm-rag-tutorial)
 - [Run API Service Container](#run-api-service-container)
 - [Run Frontend Container](#run-frontend-container)
 - [Text Chunking](#text-chunking)
-- [Vector DB](#vector-db)
+- [Vector DB UI](#vector-db-ui)
 - [Chat](#chat)
 - [Cheese Expert Agent](#cheese-expert-agent)
 - [Pavlos Cheese Model](#pavlos-cheese-model)
@@ -31,38 +41,84 @@ The goal: **answer questions about the cheese books through a web UI, using an L
 ## Prerequisites
 
 - Have Docker installed
-- Completed the [llm-rag](https://github.com/dlops-io/llm-rag) tutorial, with at least one collection loaded into ChromaDB
 - Cloned this repository to your local machine
 
 ### Setup GCP Service Account
 
-Use the same `llm-service-account.json` from llm-rag (roles: **Storage Admin** and **Gemini Enterprise Agent Platform User**). If you don't have it yet, follow the [Setup GCP Service Account](https://github.com/dlops-io/llm-rag#setup-gcp-service-account) steps in llm-rag.
+1. To set up a service account, go to the [GCP Console](https://console.cloud.google.com/home/dashboard), search for **"Service accounts"** in the top search box, or navigate to **IAM & Admin → Service accounts** from the top-left menu.
+2. Create a new service account called `llm-service-account`.
+3. In **"Grant this service account access to project"** select:
+  - **Storage Admin**
+  - **Gemini Enterprise Agent Platform User** (listed as "Vertex AI User" in older projects)
+4. This will create a service account.
+5. Click the service account and navigate to the tab **KEYS**.
+6. Click the button **ADD Key (Create New Key)** and select **JSON**. This will download a private key JSON file to your computer.
+7. Copy this JSON file into the **secrets** folder and rename it to `llm-service-account.json`.
 
 Your folder structure should look like this:
 
 ```text
 |-cheese-app-v0
+  |-llm-rag               # CLI: chunk, embed, load into ChromaDB
+  |-api-service           # FastAPI server (port 9000)
+  |-frontend-ai-chatbot   # Next.js app (port 3200)
 |-secrets
   |-llm-service-account.json
 ```
 
-### Start ChromaDB
+### Create the Docker Network
 
-The frontend talks to ChromaDB directly from your browser at `http://localhost:8000`. From the `llm-rag` folder, start the container:
+The API and frontend containers join `cheese-app-network`. Create it once:
+
+```bash
+docker network inspect cheese-app-network >/dev/null 2>&1 || docker network create cheese-app-network
+```
+
+---
+
+## Build the Vector DB
+
+***Setup**: load the books into ChromaDB. This is the only `llm-rag` step the app needs. Do it once; the data persists across restarts.*
+
+1. Open a terminal inside the `llm-rag` folder.
+2. Update `GCP_PROJECT` to your own project ID in `docker-shell.sh`.
+3. Run:
 
 ```bash
 sh docker-shell.sh
 ```
 
-Keep it running. The llm-rag `docker-compose.yml` already allows CORS requests from `http://localhost:3200`, the frontend's port.
-
-### Create the Docker Network
-
-Both containers join `cheese-app-network`. Create it once:
+4. Inside the container, run chunk → embed → load for each chunking method:
 
 ```bash
-docker network inspect cheese-app-network >/dev/null 2>&1 || docker network create cheese-app-network
+python cli.py --chunk --embed --load --chunk_type char-split
+python cli.py --chunk --embed --load --chunk_type recursive-split
 ```
+
+This will:
+
+- Start ChromaDB at `http://localhost:8000` (container `llm-rag-chromadb`)
+- Split each book in `input-datasets/books` into chunks and save them as JSONL files in `outputs`
+- Generate embeddings with `gemini-embedding-001` (256 dimensions)
+- Load them into the collections `char-split-collection` and `recursive-split-collection`
+- Store the data in `llm-rag/docker-volumes/chromadb`, so you don't have to re-run these steps
+
+ChromaDB keeps running after you exit the CLI container, and allows requests from the frontend at `http://localhost:3200`. To stop it, run `docker compose down` inside `llm-rag`.
+
+---
+
+## Optional: LLM RAG Tutorial
+
+***Optional**: not required to run the app. Follow it to learn how the vector DB is built, one step at a time.*
+
+The [LLM RAG tutorial](llm-rag/README.md) runs from the same `llm-rag` container and covers:
+
+- Chunking (character, recursive and semantic splitting)
+- Generating embeddings
+- Loading embeddings into ChromaDB
+- Querying the vector DB
+- Chatting with the LLM using RAG
+- Agents
 
 ---
 
@@ -139,15 +195,15 @@ This will:
 
 ---
 
-## Vector DB
+## Vector DB UI
 
-***Step 2 of 5**: inspect what you loaded into ChromaDB in llm-rag.*
+***Step 2 of 5**: inspect what you loaded into ChromaDB.*
 
 Go to [http://localhost:3200/chromaui](http://localhost:3200/chromaui) and connect to `http://localhost:8000`.
 
 This will:
 
-- List the collections in your ChromaDB (e.g. `char-split-collection`, `recursive-split-collection`)
+- List the collections in your ChromaDB (`char-split-collection`, `recursive-split-collection`)
 - Show the records in each collection: documents and metadata
 
 ---
@@ -170,6 +226,8 @@ This will:
 ## Cheese Expert Agent
 
 ***Step 4 of 5**: let the LLM decide how to retrieve, then call a server-side tool before answering.*
+
+![Agent flow: the LLM selects a retrieval tool, fetches the relevant chunks, then answers the question](llm-rag/images/llm-rag-flow-3.png)
 
 Go to [http://localhost:3200/agent](http://localhost:3200/agent), pick a collection, and ask a question (e.g. "Describe where cheese making is important in Pavlos's book?").
 
