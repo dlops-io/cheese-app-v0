@@ -11,6 +11,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="/secrets/llm-service-account.json"
 export IMAGE_NAME="llm-rag-analysis-api-service"
 
 
+docker network create cheese-app-network
 # Build the image based on the Dockerfile
 docker build -t $IMAGE_NAME -f Dockerfile .
 
